@@ -47,9 +47,14 @@ fn checkout_main(repo: &Repository, main_exists: bool, master_exists: bool) -> R
         (false, true) => "master",
         (false, false) => panic!("Don't know which branch to reset to"),
     };
-    let (object, reference) = repo.revparse(refname)?;
+    let (object, reference) = repo.revparse_ext(refname)?;
+
     repo.checkout_tree(&object, None)?;
-    repo.set_head(reference)
+    repo.set_head(
+        &reference
+            .map(|rference| rference.name().unwrap().to_owned())
+            .unwrap(),
+    )
 }
 
 fn delete_branch(branch: Option<Branch>) -> Result<(), Error> {
