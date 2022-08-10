@@ -1,9 +1,9 @@
 use git2::{Branch, BranchType, Error, Repository};
 
-struct RepoState {
+struct RepoState<'repo> {
     main_exists: bool,
     master_exists: bool,
-    branch_to_delete: Option<Branch>,
+    branch_to_delete: Option<Branch<'repo>>,
 }
 
 fn main() -> Result<(), Error> {
@@ -15,7 +15,7 @@ fn main() -> Result<(), Error> {
         branch_to_delete,
     } = current_branch(&repo)?;
     checkout_main(&repo, main_exists, master_exists)?;
-    delete_branch(&repo, branch_to_delete)?;
+    delete_branch(branch_to_delete)?;
 
     Ok(())
 }
@@ -45,11 +45,15 @@ fn checkout_main(repo: &Repository, main_exists: bool, master_exists: bool) -> R
     let refname = match (main_exists, master_exists) {
         (true, _) => "main",
         (false, true) => "master",
-        (false, false) => return Err("jibbly"),
+        (false, false) => panic!("Don't know which branch to reset to"),
     };
     repo.set_head(refname)
 }
 
-fn delete_branch(repo: &Repository, mut branch: Option<Branch>) -> Result<(), Error> {
-    branch.delete()
+fn delete_branch(branch: Option<Branch>) -> Result<(), Error> {
+    if let Some(mut branch) = branch {
+        branch.delete()
+    } else {
+        Ok(())
+    }
 }
